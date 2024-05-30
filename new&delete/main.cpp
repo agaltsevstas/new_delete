@@ -225,7 +225,7 @@ void operator delete(void* p, int number, const char* str)
     ::operator delete(p);
 }
 
-#include <forward_list>
+
 int main()
 {
     /*
