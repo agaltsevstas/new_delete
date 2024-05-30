@@ -10,7 +10,13 @@
 - new[] - allocate memory in heap + constructor для каждого элемента массива. При выбросе исключения в конструкторе, то у всех созданных элементов массива вызывается деструктор в порядке, обратном вызову конструктора, затем выделенная память освобождается.
 - new (std::nothrow) - return T* ptr = new T - в случае успеха, nullptr - в случае неудачи.
 - new (buffer) - allocate memory in placement - не выделяет память, а использует уже выделенную память (static, stack, heap) для вызова конструктора. Могут быть случаи, когда требуется переконструировать объект несколько раз (vector), поэтому в этих случаях размещение нового оператора может быть более эффективным.
-- delete - destructor + deallocate memory in heap.
+- delete - destructor + deallocate memory in heap, Для указателей, которые nullptr/NULL не приводит к abort/terminate. 
+  Примеры:
+  1. delete(void*)0;
+  2. int *ptr = nullptr; <br>
+     delete ptr;
+  3. int *ptr = NULL;  <br>
+     delete ptr;
 - delete[] destructor в порядке, обратном вызову конструктора + deallocate memory in heap.
  
 ### Перегрузка operator new

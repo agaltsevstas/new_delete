@@ -225,7 +225,7 @@ void operator delete(void* p, int number, const char* str)
     ::operator delete(p);
 }
 
-
+#include <forward_list>
 int main()
 {
     /*
@@ -237,6 +237,21 @@ int main()
         {
             data = new Data;
             delete data;
+        }
+        catch (const std::exception& e)
+        {
+            std::cout << "Ошибка: " << e.what() << std::endl;
+        }
+    }
+    /*
+     delete для указателей (void*)0, int *ptr = nullptr и int *ptr = NULL не приводит к abort/terminate.
+     */
+    {
+        int *ptr = nullptr;
+        try
+        {
+            delete (void*)0;
+            delete ptr;
         }
         catch (const std::exception& e)
         {
