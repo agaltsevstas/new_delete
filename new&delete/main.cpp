@@ -247,10 +247,11 @@ int main()
      delete для указателей (void*)0, int *ptr = nullptr и int *ptr = NULL не приводит к abort/terminate.
      */
     {
-        int *ptr = nullptr;
         try
         {
             delete (void*)0;
+            
+            int *ptr = nullptr;
             delete ptr;
         }
         catch (const std::exception& e)
@@ -296,21 +297,18 @@ int main()
     {
         std::cout << "new" << std::endl;
         
-        float* number = nullptr;
-        int* mass = nullptr;
         try
         {
-            number = new float(10);
-            mass = new int[10];
+            float* number = new float(10);
+            int* mass = new int[10];
+            
+            delete number;
+            delete[] mass;
         }
         catch (std::bad_alloc exception)
         {
             std::cout << exception.what() << std::endl;
         }
-        
-        delete number;
-        delete[] mass;
-
     }
     // new nothrow
     {
@@ -327,64 +325,60 @@ int main()
         std::cout << "new placement" << std::endl;
         // number
         {
-            [[maybe_unused]] int* number = nullptr;
-            [[maybe_unused]] int *null = nullptr;
-            
-            int* number1 = new int(0);
-            int* number2 = nullptr;
-            int* number3 = nullptr;
-            int* number4 = nullptr;
-            
-            int number_placement = 0;
-            char number_buffer[8];
-            
             try
             {
+                [[maybe_unused]] int* number = nullptr;
+                [[maybe_unused]] int *null = nullptr;
                 // number = new(null) int(1); // Error: adress - nullptr
-                number1 = new (number1) int(4);
-                number2 = new (&number_placement) int(2);
                 
+                int* number1 = new int(0);
+                number1 = new (number1) int(4);
+                
+                int number_placement = 0;
+                int* number2 = new (&number_placement) int(2);
+                
+                char number_buffer[8];
                 // new (&number_buffer) и new (number_buffer) - для записи числа в начало равносильно
-                number3 = new (&number_buffer) int(3);
+                int* number3 = new (&number_buffer) int(3);
                 number3 = new (number_buffer) int(3); // запишет в массив элемента с индексом 0
                 
                 // new (&number_buffer + sizeof(int)) и new (number_buffer + sizeof(int)) - для записи в середину НЕ РАВНОСИЛЬНО!
                 // number4 = new (&number_buffer + sizeof(int)) int(4);
-                number4 = new (number_buffer + sizeof(int)) int(4); // запишет в массив элемента с индексом 4
+                int* number4 = new (number_buffer + sizeof(int)) int(4); // запишет в массив элемента с индексом 4
                 
                 /*
                  number_buffer: хранениче чисел 100, 200 в 8 байтах
                  100    |200
                  0,1,2,3,4,5,6,7
                  */
+                
+                std::cout << "number1: " << *number1 << std::endl;
+                std::cout << "number2: " << *number2 << std::endl;
+                int* number2_copy = new (&number_placement) int(20); // replacement new memory in number1
+                std::cout << "number2: " << *number1 << std::endl;
+                std::cout << "number2_copy: " << *number2_copy << std::endl;
+                std::cout << "number3: " << *number3 << std::endl;
+                std::cout << "number4: " << *number4 << std::endl;
+                
+                delete number1; // можно удалить переменную, выделенную в куче
+                // delete number2; // нельзя удалить переменную, выделенную на стеке
+                // delete number3; // нельзя удалить переменную, выделенную на стеке
+                // delete number4; // нельзя удалить переменную, выделенную на стеке
             }
             catch (std::bad_alloc exception)
             {
                 std::cout << exception.what() << std::endl;
             }
-            
-            std::cout << "number1: " << *number1 << std::endl;
-            std::cout << "number2: " << *number2 << std::endl;
-            int* number2_copy = new (&number_placement) int(20); // replacement new memory in number1
-            std::cout << "number2: " << *number1 << std::endl;
-            std::cout << "number2_copy: " << *number2_copy << std::endl;
-            std::cout << "number3: " << *number3 << std::endl;
-            std::cout << "number4: " << *number4 << std::endl;
-            
-            delete number1; // можно удалить переменную, выделенную в куче
-            // delete number2; // нельзя удалить переменную, выделенную на стеке
-            // delete number3; // нельзя удалить переменную, выделенную на стеке
-            // delete number4; // нельзя удалить переменную, выделенную на стеке
         }
         // mass
         {
             constexpr int size = 10;
             int c_mass[size];
             
-            int* mass1 = new int[size];
-            int* mass2 = nullptr;
             try
             {
+                int* mass1 = new int[size];
+                int* mass2 = nullptr;
                 mass1 = new (mass1) int[size]; // запишет один элемент
                 
                 for (int i = 0; i < size; ++i)
@@ -396,24 +390,24 @@ int main()
                 
                 for (int i = 0; i < size; ++i)
                     mass2[i] = i;
+                
+                std::cout << "c_mass: " << std::endl;
+                for (int i = 0; i < size; ++i)
+                    std::cout << c_mass[i] << " ";
+                std::cout << std::endl;
+                
+                std::cout << "mass: " << std::endl;
+                for (int i = 0; i < size; ++i)
+                    std::cout << mass1[i] << " ";
+                std::cout << std::endl;
+                
+                delete[] mass1; // можно удалить массив, выделенный в куче
+                // delete[] mass2; // нельзя удалить массив, выделенный на стеке
             }
             catch (std::bad_alloc exception)
             {
                 std::cout << exception.what() << std::endl;
             }
-            
-            std::cout << "c_mass: " << std::endl;
-            for (int i = 0; i < size; ++i)
-                std::cout << c_mass[i] << " ";
-            std::cout << std::endl;
-            
-            std::cout << "mass: " << std::endl;
-            for (int i = 0; i < size; ++i)
-                std::cout << mass1[i] << " ";
-            std::cout << std::endl;
-            
-            delete[] mass1; // можно удалить массив, выделенный в куче
-            // delete[] mass2; // нельзя удалить массив, выделенный на стеке
         }
     }
 
